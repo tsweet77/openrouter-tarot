@@ -45,16 +45,25 @@ def hash_question(question: str, salt: str = "", times: int = THINK_DEPTH) -> in
 def draw_cards(question: str, count: int) -> List[str]:
     drawn = []
     used_indices = set()
-    timestamp = int(time.time())  # Add a bit of time-based randomness
+    timestamp = int(time.time())
 
     for i in range(count):
-        salt = f"{question}-card{i}-time{timestamp}"
-        while True:
+        attempts = 0
+        while attempts < 50:  # prevent infinite loop
+            salt = f"{question}-card{i}-time{timestamp + attempts}"
             index = hash_question(question, salt) % DECK_SIZE
             if index not in used_indices:
                 used_indices.add(index)
                 drawn.append(cards[index])
                 break
+            attempts += 1
+        else:
+            # Fallback: forcibly add any unused card to avoid freezing
+            for idx in range(DECK_SIZE):
+                if idx not in used_indices:
+                    used_indices.add(idx)
+                    drawn.append(cards[idx])
+                    break
     return drawn
 
 # === INTERPRETATION REQUEST ===
